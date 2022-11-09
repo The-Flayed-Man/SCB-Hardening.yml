@@ -1,0 +1,40 @@
+--- 
+ - name: SCB-Hardening
+   hosts: test
+   become_method: sudo
+   gather_facts: false
+   tasks:
+   
+#configure Coredump.conf
+     - name: Lineinfile module
+       ansible.builtin.lineinfile:
+        path: /etc/systemd/coredump.conf
+        regexp: '^#Storage=none'
+        line: Storage=none
+
+     - name: Lineinfile module
+       ansible.builtin.lineinfile:
+        path: /etc/systemd/coredump.conf
+        regexp: '^#Compress=yes'
+        line: Compress=yes
+#Configure journald.conf
+     - name: Lineinfile module
+       ansible.builtin.lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^#ProcessSizeMax=0'
+        line: ProcessSizeMax=0
+     - name: Lineinfile module
+       ansible.builtin.lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^#ForwardToSyslog=yes'
+        line: ForwardToSyslog=yes
+     - name: Lineinfile module
+       ansible.builtin.lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^#Compress=yes'
+        line: Compress=yes
+     - name: Lineinfile module
+       ansible.builtin.lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^#Storage=persistant'
+        line: Storage=persistant
