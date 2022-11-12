@@ -5,6 +5,48 @@
    gather_facts: false
    tasks:
    
+   
+#ssh config file changes
+     - name: setting | sshd.
+       lineinfile:
+         dest: /etc/ssh/sshd_config
+         regexp: "{{ item.regexp }}"
+         line: "{{ item.line }}"
+         state: present
+       with_items:
+         - { regexp: "^#?UseDNS", line: "UseDNS no" }
+         - { regexp: "^#?UsePAM", line: "UsePAM yes" }
+         - { regexp: "^PasswordAuthentication", line: "PasswordAuthentication yes" }
+         - { regexp: "^#MaxSessions 10", line: "MaxSessions 10" }
+         - { regexp: "^X11Forwarding yes", line: "X11Forwarding no" }
+         - { regexp: "^##ClientAliveInterval 0", line: "ClientAliveInterval 0" }
+         - { regexp: "^#ClientAliveCountMax 3", line: "ClientAliveCountMax 3" }
+         - { regexp: "^#MaxStartups 10:30:1", line: "MaxStartups 10:30:1" }
+         - { regexp: "^#MaxAuthTries 6", line: "MaxAuthTries 6" }
+         - { regexp: "^#PermitRootLogin prohibit-password", line: "PermitRootLogin no" }
+       tags:
+        - sshd
+
+     - name: install | set ssh key file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_*
+         owner: root
+         group: root
+         mode: 600
+
+     - name: Restart sshd
+       ansible.builtin.service: 
+         name: sshd
+         state: restarted
+
+     - name: Check sshd status
+       shell: systemctl status  sshd
+       register: Check_sshd_status
+     
+     - name: Print Sshd status
+       debug:
+         msg: "{{ Check_sshd_status.stdout_lines }}"
+         
 #configure Coredump.conf
      - name: Lineinfile module
        ansible.builtin.lineinfile:
