@@ -1,0 +1,92 @@
+- name: setting | sshd.
+       lineinfile:
+         dest: /etc/ssh/sshd_config
+         regexp: "{{ item.regexp }}"
+         line: "{{ item.line }}"
+         state: present
+       with_items:
+         - { regexp: "^#?UseDNS", line: "UseDNS no" }
+         - { regexp: "^#?UsePAM", line: "UsePAM yes" }
+         - { regexp: "^#PasswordAuthentication yes", line: "PasswordAuthentication no" }
+         - { regexp: "^#MaxSessions 10", line: "MaxSessions 10" }
+         - { regexp: "^X11Forwarding yes", line: "X11Forwarding no" }
+         - { regexp: "^##ClientAliveInterval 0", line: "ClientAliveInterval 180" }
+         - { regexp: "^#ClientAliveCountMax 3", line: "ClientAliveCountMax 3" }
+         - { regexp: "^#MaxStartups 10:30:100", line: "MaxStartups 10:30:100" }
+         - { regexp: "^#MaxAuthTries 6", line: "MaxAuthTries 3" }
+         - { regexp: "^#PermitRootLogin prohibit-password", line: "PermitRootLogin no" }
+         - { regexp: "^#Banner", line: "Banner /etc/issue.net" }
+         - { regexp: "^##PermitEmptyPasswords no", line: "PermitEmptyPasswords no" }
+
+       tags:
+        - sshd
+#Make ssh protocol version 2. 
+     - name: Set ssh protocol to 2
+       lineinfile:
+         path: /etc/ssh/sshd_config
+         state: present
+         line: 'Protocol 2'
+#Configure owner and permissions on ssh keys. 
+     - name: Set /etc/ssh/ssh_host_rsa_key.pub permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_rsa_key.pub
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set s/etc/ssh/ssh_host_rsa_key.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_rsa_key
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set ssh_host_ecdsa_key.pub file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_ecdsa_key.pub
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set ssh_host_ecdsa_key file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_ecdsa_key
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set ssh_host_ed25519_key.pub file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_ed25519_key.pub
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set ssh_host_ed25519_key file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_ed25519_key
+         owner: root
+         group: root
+         mode: '0600' 
+         
+      #Set the system to only accept certian users.
+     - name: Set ssh allow users
+       lineinfile:
+         path: /etc/ssh/sshd_config
+         state: present
+         line: 'AllowUsers linuxadmn86 the-flayed-man root'
+
+#Restart sshd for config changes to take place.
+     - name: Restart sshd
+       ansible.builtin.service: 
+         name: sshd
+         state: restarted
+
+#Check sshd status to make sure it is operational.     
+     - name: Check sshd status
+       shell: systemctl status  sshd
+       register: Check_sshd_status
+
+     - name: print sshd status
+       debug:
+         msg: "{{ Check_sshd_status.stdout_lines }}" 
