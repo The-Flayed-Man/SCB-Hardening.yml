@@ -1,0 +1,149 @@
+- name: Set /etc/ssh/ssh_host_rsa_key.pub permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_rsa_key.pub
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set s/etc/ssh/ssh_host_rsa_key.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_rsa_key
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set ssh_host_ecdsa_key.pub file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_ecdsa_key.pub
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set ssh_host_ecdsa_key file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_ecdsa_key
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set ssh_host_ed25519_key.pub file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_ed25519_key.pub
+         owner: root
+         group: root
+         mode: '0600'
+
+     - name: Set ssh_host_ed25519_key file permissions.
+       ansible.builtin.file:
+         path: /etc/ssh/ssh_host_ed25519_key
+         owner: root
+         group: root
+         mode: '0600'   
+
+#set owner and permissions for the /etc/gshadow file.
+     - name: Set /etc/gshadow file permissions.
+       ansible.builtin.file:
+         path: /etc/gshadow
+         owner: root
+         group: root
+         mode: '0600'
+
+#set owner and permissions for the /etc/shadow file.         
+     - name: Set /etc/shadow file permissions.
+       ansible.builtin.file:
+         path: /etc/shadow
+         owner: root
+         group: root
+         mode: '0600'
+
+#Set owner and permissions for the /etc/group file
+     - name: Set /etc/group file permissions.
+       ansible.builtin.file:
+         path: /etc/group
+         owner: root
+         group: root
+         mode: '0644'
+
+#Set owner and permissions for the /etc/passwd file
+     - name: Set /etc/passwd file permissions.
+       ansible.builtin.file:
+         path: /etc/passwd
+         owner: root
+         group: root
+         mode: '0644'
+         
+#Set owner and permissions for /etc/cron.d
+     - name: Set /etc/cron.d file permissions.
+       ansible.builtin.file:
+         path: /etc/cron.d
+         owner: root
+         group: root
+         mode: '0700'
+
+#Set owner and permissions for /etc/monthly
+     - name: Set /etc/monthly file permissions.
+       ansible.builtin.file:
+         path: /etc/cron.monthly
+         owner: root
+         group: root
+         mode: '0700'
+
+#Set owner and permissions for /etc/weekly
+     - name: Set /etc/cron.d file permissions.
+       ignore_errors: yes
+       ansible.builtin.file:
+         path: /etc/weekly
+         owner: root
+         group: root
+         mode: '0700'
+
+#Set owner and permissions for /etc/daily
+     - name: Set /etc/daily file permissions.
+       ignore_errors: yes
+       ansible.builtin.file:
+         path: /etc/daily
+         owner: root
+         group: root
+         mode: '0700'    
+
+#Set owner and permissions for /etc/cron.hourly
+     - name: Set /etc/cron.hourly file permissions.
+       ignore_errors: yes
+       ansible.builtin.file:
+         path: /etc/cron.hourly
+         owner: root
+         group: root
+         mode: '0700'
+
+#Set owner and permissions for /etc/crontab
+     - name: Set /etc/crontab file permissions.
+       ignore_errors: yes
+       ansible.builtin.file:
+         path: /etc/crontab
+         owner: root
+         group: root
+         mode: '0700'
+
+#Set owner and permissions for /etc/anacrontab
+     - name: Set /etc/anacrontab file permissions.
+       ignore_errors: yes
+       ansible.builtin.file:
+         path: /etc/anacrontab
+         owner: root
+         group: root
+         mode: '0700'                 
+
+#Set owner and permissions for /etc/grub.conf
+     - name: Set /etc/grub.conf file permissions.
+       ignore_errors: yes
+       ansible.builtin.file:
+         owner: root
+         group: root
+         path: /etc/grub.conf
+         mode: og-rwx   
+         
+#Set owner and permissions for /etc/fstab
+     - name: Set /etc/grub.conf file permissions.
+       ansible.builtin.file:
+         path: /etc/fstab
+         mode: og-rwx 
