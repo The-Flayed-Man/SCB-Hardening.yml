@@ -16,29 +16,54 @@
        with_items:
          - { regexp: "^#?UseDNS", line: "UseDNS no" }
          - { regexp: "^#?UsePAM", line: "UsePAM yes" }
-         - { regexp: "^PasswordAuthentication", line: "PasswordAuthentication yes" }
+         - { regexp: "^PasswordAuthentication yes", line: "PasswordAuthentication no" }
          - { regexp: "^#MaxSessions 10", line: "MaxSessions 10" }
          - { regexp: "^X11Forwarding yes", line: "X11Forwarding no" }
-         - { regexp: "^##ClientAliveInterval 0", line: "ClientAliveInterval 0" }
+         - { regexp: "^##ClientAliveInterval 0", line: "ClientAliveInterval 180" }
          - { regexp: "^#ClientAliveCountMax 3", line: "ClientAliveCountMax 3" }
          - { regexp: "^#MaxStartups 10:30:1", line: "MaxStartups 10:30:1" }
-         - { regexp: "^#MaxAuthTries 6", line: "MaxAuthTries 6" }
+         - { regexp: "^#MaxAuthTries 6", line: "MaxAuthTries 3" }
          - { regexp: "^#PermitRootLogin prohibit-password", line: "PermitRootLogin no" }
+         - { regexp: "^#Banner none", line: "/etc/issue.net" }
+         - { regexp: "^##PermitEmptyPasswords no", line: "PermitEmptyPasswords no" }
        tags:
         - sshd
+#Configure sshd Banner.      
+     - name: Configure ssh banner
+       lineinfile:
+         path: /etc/issue.net
+         state: present
+         line: 'ALERT! You are entering a secured area! Your IP, Login Time, and Username have been noted and have been sent to the server administrator!'
 
-     - name: install | set ssh key file permissions.
+#Configure owner and permissions on ssh keys.
+     - name: Set ssh key file permissions.
        ansible.builtin.file:
          path: /etc/ssh/ssh_host_*
          owner: root
          group: root
          mode: 600
+         
+#Make ssh protocol version 2. 
+     - name: Set ssh protocol to 2
+       lineinfile:
+         path: /etc/ssh/sshd_config
+         state: present
+         line: 'Protocol 2'
 
+#Set the system to only accept certian users.
+     - name: Set ssh allow users
+       lineinfile:
+         path: /etc/ssh/sshd_config
+         state: present
+         line: 'AllowUsers specialusr1 specialusr2'
+
+#Restart sshd for config changes to take place.
      - name: Restart sshd
        ansible.builtin.service: 
          name: sshd
          state: restarted
-
+         
+#Check sshd status to make sure it is operational.
      - name: Check sshd status
        shell: systemctl status  sshd
        register: Check_sshd_status
@@ -48,35 +73,140 @@
          msg: "{{ Check_sshd_status.stdout_lines }}"
          
 #configure Coredump.conf
-     - name: Lineinfile module
+     - name: Uncomment Storage=none
        ansible.builtin.lineinfile:
         path: /etc/systemd/coredump.conf
         regexp: '^#Storage=none'
         line: Storage=none
 
-     - name: Lineinfile module
+     - name: Uncomment Compress=yes
        ansible.builtin.lineinfile:
         path: /etc/systemd/coredump.conf
         regexp: '^#Compress=yes'
         line: Compress=yes
+        
 #Configure journald.conf
-     - name: Lineinfile module
+     - name: Uncomment ProcessSizeMax=0
        ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
         regexp: '^#ProcessSizeMax=0'
         line: ProcessSizeMax=0
-     - name: Lineinfile module
+        
+     - name: Uncomment ForwardToSyslog=yes
        ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
         regexp: '^#ForwardToSyslog=yes'
         line: ForwardToSyslog=yes
-     - name: Lineinfile module
+        
+     - name: Uncommet Compress=yes
        ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
         regexp: '^#Compress=yes'
         line: Compress=yes
-     - name: Lineinfile module
+        
+     - name: Uncomment Storage=persistant
        ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
         regexp: '^#Storage=persistant'
         line: Storage=persistant
+
+#set owner and permissions for the /etc/gshadow file.
+     - name: Set /etc/gshadow file permissions.
+       ansible.builtin.file:
+         path: /etc/gshadow
+         owner: root
+         group: root
+         mode: 600
+#set owner and permissions for the /etc/shadow file.         
+     - name: Set /etc/shadow file permissions.
+       ansible.builtin.file:
+         path: /etc/shadow
+         owner: root
+         group: root
+         mode: 600
+
+#Set owner and permissions for the /etc/group file
+     - name: Set /etc/group file permissions.
+       ansible.builtin.file:
+         path: /etc/group
+         owner: root
+         group: root
+         mode: 644
+
+#Set owner and permissions for the /etc/passwd file
+     - name: Set /etc/passwd file permissions.
+       ansible.builtin.file:
+         path: /etc/passwd
+         owner: root
+         group: root
+         mode: 644
+         
+#Set owner and permissions for /etc/cron.d
+     - name: Set /etc/cron.d file permissions.
+       ansible.builtin.file:
+         path: /etc/cron.d
+         owner: root
+         group: root
+         mode: 700
+
+#Set owner and permissions for /etc/monthly
+     - name: Set /etc/monthly file permissions.
+       ansible.builtin.file:
+         path: /etc/cron.monthly
+         owner: root
+         group: root
+         mode: 700
+
+#Set owner and permissions for /etc/weekly
+    - name: Set /etc/cron.d file permissions.
+      ansible.builtin.file:
+        path: /etc/weekly
+        owner: root
+        group: root
+        mode: 700
+
+#Set owner and permissions for /etc/daily
+    - name: Set /etc/daily file permissions.
+      ansible.builtin.file:
+        path: /etc/daily
+        owner: root
+        group: root
+        mode: 700    
+
+#Set owner and permissions for /etc/cron.hourly
+    - name: Set /etc/cron.hourly file permissions.
+      ansible.builtin.file:
+        path: /etc/cron.hourly
+        owner: root
+        group: root
+        mode: 700
+
+#Set owner and permissions for /etc/crontab
+     - name: Set /etc/crontab file permissions.
+       ansible.builtin.file:
+         path: /etc/crontab
+         owner: root
+         group: root
+         mode: 700
+
+#Set owner and permissions for /etc/anacrontab
+     - name: Set /etc/anacrontab file permissions.
+       ansible.builtin.file:
+         path: /etc/anacrontab
+         owner: root
+         group: root
+         mode: 700                 
+
+#Set owner and permissions for /etc/grub.conf
+     - name: Set /etc/grub.conf file permissions.
+       ansible.builtin.file:
+         path: /etc/grub.conf
+         owner: root
+         group: root
+         mode: og-rwx    
+         
+#Set owner and permissions for /etc/grub.conf
+     - name: Set /etc/grub.conf file permissions.
+       ansible.builtin.file:
+         path: /etc/fstab
+         mode: og-rwx         
