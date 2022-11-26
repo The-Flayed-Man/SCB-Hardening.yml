@@ -16,16 +16,21 @@
        with_items:
          - { regexp: "^#?UseDNS", line: "UseDNS no" }
          - { regexp: "^#?UsePAM", line: "UsePAM yes" }
-         - { regexp: "^PasswordAuthentication yes", line: "PasswordAuthentication no" }
+         - { regexp: "^PasswordAuthentication yes", line: "PasswordAuthentication yes" }
          - { regexp: "^#MaxSessions 10", line: "MaxSessions 10" }
          - { regexp: "^X11Forwarding yes", line: "X11Forwarding no" }
          - { regexp: "^##ClientAliveInterval 0", line: "ClientAliveInterval 180" }
-         - { regexp: "^#ClientAliveCountMax 3", line: "ClientAliveCountMax 3" }
+         - { regexp: "^#ClientAliveCountMax 3", line: "ClientAliveCountMax 2" }
          - { regexp: "^#MaxStartups 10:30:1", line: "MaxStartups 10:30:1" }
          - { regexp: "^#MaxAuthTries 6", line: "MaxAuthTries 3" }
          - { regexp: "^#PermitRootLogin prohibit-password", line: "PermitRootLogin no" }
          - { regexp: "^#Banner none", line: "Banner /etc/issue.net" }
          - { regexp: "^##PermitEmptyPasswords no", line: "PermitEmptyPasswords no" }
+         - { regexp: "^#AllowTcpForwarding yes", line: "AllowTcpForwarding no" }
+         - { regexp: "^#Compression yes", line: "Compression no" }
+         - { regexp: "^#TCPKeepAlive yes", line: "TCPKeepAlive no" }
+         - { regexp: "^#AllowAgentForwarding yes", line: "AllowAgentForwarding no" }
+         - { regexp: "^#LogLevel info", line: "LogLevel verbose" }
        tags:
         - sshd
         
@@ -35,7 +40,13 @@
          path: /etc/issue.net
          state: present
          line: 'ALERT! You are entering a secured area! Your IP, Login Time, and Username have been noted and have been sent to the server administrator!'
-
+#Configure sshd Banner. 
+     - name: Configure sshd Banner.
+       ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#Banner'
+        line: Banner /etc/issue.net
+        
 #Configure owner and permissions on ssh keys.
      - name: Set /etc/ssh/ssh_host_rsa_key.pub permissions.
        ansible.builtin.file:
@@ -133,6 +144,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
          state: present
          line: 'MACs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1'
 
+
 #Restart sshd for config changes to take place.
      - name: Restart sshd
        ansible.builtin.service: 
@@ -194,7 +206,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #set owner and permissions for the /etc/gshadow file.
      - name: Set /etc/gshadow file permissions.
-       ignore_errors: yes
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/gshadow
          owner: root
@@ -203,7 +215,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
          
 #set owner and permissions for the /etc/shadow file.         
      - name: Set /etc/shadow file permissions.
-       ignore_errors: yes
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/shadow
          owner: root
@@ -212,7 +224,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #Set owner and permissions for the /etc/group file
      - name: Set /etc/group file permissions.
-       ignore_errors: yes
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/group
          owner: root
@@ -221,7 +233,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #Set owner and permissions for the /etc/passwd file
      - name: Set /etc/passwd file permissions.
-       ignore_errors: no
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/passwd
          owner: root
@@ -230,7 +242,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
          
 #Set owner and permissions for /etc/cron.d
      - name: Set /etc/cron.d file permissions.
-       ignore_errors: yes
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/cron.d
          owner: root
@@ -239,7 +251,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #Set owner and permissions for /etc/monthly
      - name: Set /etc/monthly file permissions.
-       ignore_errors: yes
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/cron.monthly
          owner: root
@@ -248,7 +260,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #Set owner and permissions for /etc/weekly
     - name: Set /etc/cron.d file permissions.
-      ignore_errors: yes
+      ignore_errors: true
       ansible.builtin.file:
         path: /etc/weekly
         owner: root
@@ -257,7 +269,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #Set owner and permissions for /etc/daily
     - name: Set /etc/daily file permissions.
-      ignore_errors: yes
+      ignore_errors: true
       ansible.builtin.file:
         path: /etc/daily
         owner: root
@@ -266,7 +278,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #Set owner and permissions for /etc/cron.hourly
     - name: Set /etc/cron.hourly file permissions.
-      ignore_errors: yes
+      ignore_errors: true
       ansible.builtin.file:
         path: /etc/cron.hourly
         owner: root
@@ -275,7 +287,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #Set owner and permissions for /etc/crontab
      - name: Set /etc/crontab file permissions.
-       ignore_errors: yes
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/crontab
          owner: root
@@ -292,7 +304,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
 
 #Set owner and permissions for /etc/grub.conf
      - name: Set /etc/grub.conf file permissions.
-       ignore_errors: no
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/grub.conf
          owner: root
@@ -301,7 +313,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
          
 #Set owner and permissions for /etc/fstab
      - name: Set /etc/fstab file permissions.
-       ignore_errors: yes
+       ignore_errors: true
        ansible.builtin.file:
          path: /etc/fstab
          mode: og-rwx         
