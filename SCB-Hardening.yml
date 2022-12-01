@@ -1,12 +1,8 @@
---- 
- - name: SCB-Hardening
-   hosts: test1
+---
+ - name: SCB Hardening Playbook.
+   hosts: pm1
    become_method: sudo
-   gather_facts: false
    tasks:
-   
-   
-#ssh config file changes
      - name: setting | sshd.
        lineinfile:
          dest: /etc/ssh/sshd_config
@@ -16,38 +12,35 @@
        with_items:
          - { regexp: "^#?UseDNS", line: "UseDNS no" }
          - { regexp: "^#?UsePAM", line: "UsePAM yes" }
-         - { regexp: "^PasswordAuthentication yes", line: "PasswordAuthentication yes" }
-         - { regexp: "^#MaxSessions 10", line: "MaxSessions 10" }
+         - { regexp: "^#PasswordAuthentication yes", line: "PasswordAuthentication yes" }
+         - { regexp: "^#MaxSessions 10", line: "MaxSessions 2" }
          - { regexp: "^X11Forwarding yes", line: "X11Forwarding no" }
-         - { regexp: "^##ClientAliveInterval 0", line: "ClientAliveInterval 180" }
-         - { regexp: "^#ClientAliveCountMax 3", line: "ClientAliveCountMax 2" }
-         - { regexp: "^#MaxStartups 10:30:1", line: "MaxStartups 10:30:1" }
-         - { regexp: "^#MaxAuthTries 6", line: "MaxAuthTries 3" }
-         - { regexp: "^#PermitRootLogin prohibit-password", line: "PermitRootLogin no" }
-         - { regexp: "^#Banner none", line: "Banner /etc/issue.net" }
-         - { regexp: "^##PermitEmptyPasswords no", line: "PermitEmptyPasswords no" }
+         - { regexp: "^#	X11Forwarding no", line: "	X11Forwarding no" }
+         - { regexp: "^#ClientAliveInterval 0", line: "ClientAliveInterval 0" }
+         - { regexp: "^#ClientAliveCountMax 3", line: "ClientAliveCountMax 3" }
+         - { regexp: "^#MaxStartups 10:30:100", line: "MaxStartups 10:30:60" }
+         - { regexp: "^#MaxAuthTries 6", line: "MaxAuthTries 4" }
+         - { regexp: "^#PermitRootLogin prohibit-password", line: "PermitRootLogin yes" }
+         - { regexp: "^#Banner", line: "Banner /etc/issue.net" }
+         - { regexp: "^#PermitEmptyPasswords no", line: "PermitEmptyPasswords no" }
          - { regexp: "^#AllowTcpForwarding yes", line: "AllowTcpForwarding no" }
-         - { regexp: "^#Compression yes", line: "Compression no" }
+         - { regexp: "^#	AllowTcpForwarding no", line: " 	AllowTcpForwarding no" }
+         - { regexp: "^#Compression delayed", line: "Compression no" }
          - { regexp: "^#TCPKeepAlive yes", line: "TCPKeepAlive no" }
          - { regexp: "^#AllowAgentForwarding yes", line: "AllowAgentForwarding no" }
-         - { regexp: "^#LogLevel info", line: "LogLevel verbose" }
+         - { regexp: "^#LogLevel INFO", line: "LogLevel verbose" }
+         - { regexp: "^#IgnoreRhosts yes", line: "#IgnoreRhosts no" }
        tags:
         - sshd
-        
-#Configure sshd Banner.      
-     - name: Configure ssh banner
+
+#Make ssh protocol version 2. 
+     - name: Set ssh protocol to 2
        lineinfile:
-         path: /etc/issue.net
+         path: /etc/ssh/sshd_config
          state: present
-         line: 'ALERT! You are entering a secured area! Your IP, Login Time, and Username have been noted and have been sent to the server administrator!'
-#Configure sshd Banner. 
-     - name: Configure sshd Banner.
-       ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^#Banner'
-        line: Banner /etc/issue.net
-        
-#Configure owner and permissions on ssh keys.
+         line: 'Protocol 2'
+
+#Configure owner and permissions on ssh keys. 
      - name: Set /etc/ssh/ssh_host_rsa_key.pub permissions.
        ansible.builtin.file:
          path: /etc/ssh/ssh_host_rsa_key.pub
@@ -89,21 +82,21 @@
          owner: root
          group: root
          mode: '0600' 
-         
-#Make ssh protocol version 2. 
-     - name: Set ssh protocol to 2
-       lineinfile:
-         path: /etc/ssh/sshd_config
-         state: present
-         line: 'Protocol 2'
 
-#Set the system to only accept certian users.
-     - name: Set ssh allow users
+#Configure sshd Banner. 
+     - name: 5.2.15 Ensure SSH warning banner is configured.
+       ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#Banner'
+        line: Banner /etc/issue.net
+
+#Configure sshd Banner.      
+     - name: Configure ssh banner
        lineinfile:
-         path: /etc/ssh/sshd_config
+         path: /etc/issue.net
          state: present
-         line: 'AllowUsers specialusr1 specialusr2'
-         
+         line: 'ALERT! You are entering a secured area! Your IP, Login Time, and Username have been noted and have been sent to the server administrator! This service is restricted to authorized users only. All activities on this system are logged. Unauthorized access will be fully investigated and reported to the appropriate law enforcement agencies.'
+
 #Configure kexAlgorithms.
      - name: Configure kexAlgorithms
        lineinfile:
@@ -115,8 +108,7 @@
        lineinfile:
          path: /etc/ssh/sshd_config
          state: present
-         line: 'KexAlgorithms
-curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256'
+         line: 'KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256'
 
 #Configure Ciphers.
      - name: Configure Ciphers
@@ -142,97 +134,104 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
        lineinfile:
          path: /etc/ssh/sshd_config
          state: present
-         line: 'MACs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1'
+         line: 'MACs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1'         
 
+#Set the system to only accept certian users.
+     - name: Set ssh allow users
+       lineinfile:
+         path: /etc/ssh/sshd_config
+         state: present
+         line: 'AllowUsers linuxadmn86 the-flayed-man root'
 
-#Restart sshd for config changes to take place.
-     - name: Restart sshd
-       ansible.builtin.service: 
-         name: sshd
-         state: restarted
-         
-#Check sshd status to make sure it is operational.
-     - name: Check sshd status
-       shell: systemctl status  sshd
-       register: Check_sshd_status
-     
-     - name: Print Sshd status
-       debug:
-         msg: "{{ Check_sshd_status.stdout_lines }}"
-         
 #configure Coredump.conf
-     - name: Uncomment Storage=none
+     - name: 1.5.1 Ensure core dump storage is disabled
        ansible.builtin.lineinfile:
         path: /etc/systemd/coredump.conf
         regexp: '^#Storage=none'
         line: Storage=none
+       ignore_errors: true
 
      - name: Uncomment Compress=yes
        ansible.builtin.lineinfile:
         path: /etc/systemd/coredump.conf
         regexp: '^#Compress=yes'
         line: Compress=yes
-     
-     - name: Uncomment ProcessSizeMax=0
+       ignore_errors: true
+
+     - name: 1.5.2 Ensure core dump backtraces are disabled
        ansible.builtin.lineinfile:
         path: /etc/systemd/coredump.conf
         regexp: '^#ProcessSizeMax=2G'
         line: ProcessSizeMax=0
-      
+       ignore_errors: true
+
 #Configure journald.conf
      - name: Uncomment ProcessSizeMax=0
        ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
         regexp: '^#ProcessSizeMax=2G'
         line: ProcessSizeMax=0
-        
-     - name: Uncomment ForwardToSyslog=yes
+       ignore_errors: true
+
+     - name: 4.2.1.3 Ensure journald is configured to send logs to rsyslog
        ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
         regexp: '^#ForwardToSyslog=yes'
         line: ForwardToSyslog=yes
-        
-     - name: Uncommet Compress=yes
+       ignore_errors: true
+
+     - name: 4.2.2.3 Ensure journald is configured to compress large log files
        ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
         regexp: '^#Compress=yes'
         line: Compress=yes
+       ignore_errors: true
         
-     - name: Uncomment Storage=persistant
+     - name: 4.2.2.4 Ensure journald is configured to write logfiles to persistent disk
+       ignore_errors: true
        ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
         regexp: '^#Storage=persistant'
         line: Storage=persistant
 
 #set owner and permissions for the /etc/gshadow file.
-     - name: Set /etc/gshadow file permissions.
+     - name: 6.1.6 Ensure permissions on /etc/gshadow are configured.
        ignore_errors: true
        ansible.builtin.file:
-         path: /etc/gshadow
+        path: /etc/gshadow
+        owner: root
+        group: root
+        mode: 0000
+
+#set owner and permissions for the /etc/ssh/sshd_config file.         
+     - name: 5.2.1 Ensure permissions on /etc/ssh/sshd_config are configured.
+       ignore_errors: true
+       ansible.builtin.file:
+         path: /etc/ssh/sshd_config
          owner: root
          group: root
-         mode: 600
-         
+         mode: og-rwx
+
 #set owner and permissions for the /etc/shadow file.         
-     - name: Set /etc/shadow file permissions.
+     - name: 6.1.4 Ensure permissions on /etc/shadow are configured.
        ignore_errors: true
        ansible.builtin.file:
          path: /etc/shadow
          owner: root
          group: root
-         mode: 600
+         mode: 0000
 
 #Set owner and permissions for the /etc/group file
-     - name: Set /etc/group file permissions.
+     - name: 6.1.5 Ensure permissions on /etc/group are configured.
        ignore_errors: true
        ansible.builtin.file:
          path: /etc/group
          owner: root
          group: root
-         mode: 644
+         mode: u-x,g-wx,o-wx
 
 #Set owner and permissions for the /etc/passwd file
-     - name: Set /etc/passwd file permissions.
+     - name: 6.1.3 Ensure permissions on /etc/passwd are configured.
        ignore_errors: true
        ansible.builtin.file:
          path: /etc/passwd
@@ -241,58 +240,58 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
          mode: 644
          
 #Set owner and permissions for /etc/cron.d
-     - name: Set /etc/cron.d file permissions.
+     - name: 5.1.7 Ensure permissions on /etc/cron.d are configured.
        ignore_errors: true
        ansible.builtin.file:
          path: /etc/cron.d
          owner: root
          group: root
-         mode: 700
+         mode: og-rwx
 
 #Set owner and permissions for /etc/monthly
-     - name: Set /etc/monthly file permissions.
+     - name: 5.1.6 Ensure permissions on /etc/cron.monthly are configured.
        ignore_errors: true
        ansible.builtin.file:
          path: /etc/cron.monthly
          owner: root
          group: root
-         mode: 700
+         mode: og-rwx
 
 #Set owner and permissions for /etc/weekly
-    - name: Set /etc/cron.d file permissions.
-      ignore_errors: true
-      ansible.builtin.file:
+     - name: 5.1.5 Ensure permissions on /etc/cron.weekly are configured.
+       ignore_errors: true
+       ansible.builtin.file:
         path: /etc/weekly
         owner: root
         group: root
-        mode: 700
+        mode: og-rwx
 
 #Set owner and permissions for /etc/daily
-    - name: Set /etc/daily file permissions.
-      ignore_errors: true
-      ansible.builtin.file:
+     - name: 5.1.4 Ensure permissions on /etc/cron.daily are configured.
+       ignore_errors: true
+       ansible.builtin.file:
         path: /etc/daily
         owner: root
         group: root
-        mode: 700    
+        mode: og-rwx    
 
 #Set owner and permissions for /etc/cron.hourly
-    - name: Set /etc/cron.hourly file permissions.
-      ignore_errors: true
-      ansible.builtin.file:
+     - name: 5.1.3 Ensure permissions on /etc/cron.hourly are configured.
+       ignore_errors: true
+       ansible.builtin.file:
         path: /etc/cron.hourly
         owner: root
         group: root
-        mode: 700
+        mode: og-rwx
 
 #Set owner and permissions for /etc/crontab
-     - name: Set /etc/crontab file permissions.
+     - name: 5.1.2 Ensure permissions on /etc/crontab are configured.
        ignore_errors: true
        ansible.builtin.file:
          path: /etc/crontab
          owner: root
          group: root
-         mode: 700
+         mode: og-rwx
 
 #Set owner and permissions for /etc/anacrontab
      - name: Set /etc/anacrontab file permissions.
@@ -301,7 +300,7 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
          owner: root
          group: root
          mode: 700                 
-
+       ignore_errors: true
 #Set owner and permissions for /etc/grub.conf
      - name: Set /etc/grub.conf file permissions.
        ignore_errors: true
@@ -316,4 +315,483 @@ curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nist
        ignore_errors: true
        ansible.builtin.file:
          path: /etc/fstab
-         mode: og-rwx         
+         mode: og-rwx        
+
+#umask /etc/bashrc
+     - name: 5.6.5 Ensure default user umask is 027 or more restrictive
+       ansible.builtin.lineinfile:
+        path: /etc/bashrc
+        regexp: '^   umask 022'
+        line: "   umask 027"
+       ignore_errors: true
+
+     - name: 5.6.5 Ensure default user umask is 027 or more restrictive
+       ansible.builtin.lineinfile:
+        path: /etc/bashrc
+        regexp: '^   umask 022'
+        line: '   umask 027'
+       ignore_errors: true
+     - name: 5.6.5 Ensure default user umask is 027 or more restrictive
+       ansible.builtin.lineinfile:
+        path: /etc/bashrc
+        regexp: '^  umask 022'
+        line: '       umask 027'
+       ignore_errors: true
+#umask /etc/profile
+     - name: 5.6.5 Ensure default user umask is 027 or more restrictive
+       ansible.builtin.lineinfile:
+        path: /etc/profile
+        regexp: '^    umask 002'
+        line: '    umask 027'
+       ignore_errors: true
+
+     - name: 5.6.5 Ensure default user umask is 027 or more restrictive
+       ansible.builtin.lineinfile:
+        path: /etc/profile
+        regexp: '^    umask 002'
+        line: '    umask 027'
+       ignore_errors: true
+#umask /etc/login.defs 
+     - name: 5.6.5 Ensure default user umask is 027 or more restrictive
+       ansible.builtin.lineinfile:
+        path: /etc/login.defs 
+        regexp: '^UMASK           022'
+        line: 'UMASK           027'
+       ignore_errors: true
+
+     - name: 5.6.1.1 Ensure password expiration is 365 days or less
+       ansible.builtin.lineinfile:
+        path: /etc/login.defs 
+        regexp: '^^[#]?[\s+]?PASS_MAX_DAYS\s+\d+'
+        line: PASS_MAX_DAYS   365
+       ignore_errors: true
+
+     - name: 5.6.1.2 Ensure minimum days between password changes is 7 or more
+       ansible.builtin.lineinfile:
+        path: /etc/login.defs 
+        regexp: '^PASS_MIN_DAYS   0'
+        line: "PASS_MIN_DAYS   7"
+       ignore_errors: true    
+
+     - name: 5.6.1.2 Ensure minimum days between password changes is 7 or more
+       ansible.builtin.lineinfile:
+        path: /etc/login.defs 
+        regexp: '^PASS_MIN_DAYS   0'
+        line: 'PASS_MIN_DAYS   7'
+       ignore_errors: true
+#5.6.3 Ensure default user shell timeout is 900 seconds or less.
+     - name: 5.6.3 Ensure default user shell timeout is 900 seconds or less
+       lineinfile:
+         path: /etc/profile
+         state: present
+         line: 'readonly TMOUT=900 ; export TMOUT'
+#5.6.3 Ensure default user shell timeout is 900 seconds or less.
+     - name: 5.6.3 Ensure default user shell timeout is 900 seconds or less
+       lineinfile:
+         path: /etc/bashrc
+         state: present
+         line: 'readonly TMOUT=900 ; export TMOUT'
+
+#5.6.4 Ensure default group for the root account is GID 0.
+     - name: 5.6.4 Ensure default group for the root account is GID 0
+       shell: usermod -g 0 root
+       ignore_errors: true
+
+# 1.5.3 Ensure address space layout randomization (ASLR) is enabled    
+     - name: 1.5.3 Ensure address space layout randomization (ASLR) is enabled
+       shell: sysctl -w kernel.randomize_va_space=2
+       ignore_errors: true
+
+#3.2.1 Ensure IP forwarding is disabled
+     - name: 3.2.1 Ensure IP forwarding is disabled
+       ignore_errors: true
+       shell: |
+         sysctl -w net.ipv4.ip_forward=0
+         sysctl -w net.ipv4.ip_forward=0
+         sysctl -w net.ipv6.conf.all.forwarding=0
+         sysctl -w net.ipv6.route.flush=1
+
+#3.2.2 Ensure packet redirect sending is disabled
+     - name: 3.2.2 Ensure packet redirect sending is disabled
+       ignore_errors: true
+       shell: |
+        sysctl -w net.ipv4.conf.all.send_redirects=0
+        sysctl -w net.ipv4.conf.default.send_redirects=0
+        sysctl -w net.ipv4.route.flush=1
+       
+#3.3.1 Ensure source routed packets are not accepted
+     - name: 3.2.1 Ensure IP forwarding is disabled
+       ignore_errors: true
+       shell: |
+         sysctl -w net.ipv4.conf.all.accept_source_route=0
+         sysctl -w net.ipv4.conf.default.accept_source_route=0
+         sysctl -w net.ipv4.route.flush=1
+         sysctl -w net.ipv6.conf.all.accept_source_route=0
+         sysctl -w net.ipv6.conf.default.accept_source_route=0
+         sysctl -w net.ipv6.route.flush=1
+       
+#3.3.2 Ensure ICMP redirects are not accepted
+     - name: 3.3.2 Ensure ICMP redirects are not accepted
+       ignore_errors: true
+       shell: |
+         sysctl -w net.ipv4.conf.all.accept_redirects=0
+         sysctl -w net.ipv4.conf.default.accept_redirects=0
+         sysctl -w net.ipv4.route.flush=1
+         sysctl -w net.ipv6.conf.all.accept_redirects=0
+         sysctl -w net.ipv6.conf.default.accept_redirects=0
+         sysctl -w net.ipv6.route.flush=1
+
+# 3.3.3 Ensure secure ICMP redirects are not accepted
+     - name: 3.3.3 Ensure secure ICMP redirects are not accepted
+       ignore_errors: true
+       shell: |  
+         sysctl -w net.ipv4.conf.all.secure_redirects=0
+         sysctl -w net.ipv4.conf.default.secure_redirects=0
+         sysctl -w net.ipv4.route.flush=1
+
+# 3.3.4 Ensure suspicious packets are logged
+     - name: 3.3.4 Ensure suspicious packets are logged
+       ignore_errors: true
+       shell: |
+        sysctl -w net.ipv4.conf.all.log_martians=1
+        sysctl -w net.ipv4.conf.default.log_martians=1
+        sysctl -w net.ipv4.route.flush=1
+
+# 3.3.5 Ensure broadcast ICMP requests are ignored
+     - name: 3.3.5 Ensure broadcast ICMP requests are ignored
+       ignore_errors: true
+       shell: |
+         sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=1
+         sysctl -w net.ipv4.route.flush=1
+
+# 3.3.6 Ensure bogus ICMP responses are ignored
+     - name: 3.3.6 Ensure bogus ICMP responses are ignored
+       ignore_errors: true
+       shell: |
+         sysctl -w net.ipv4.icmp_ignore_bogus_error_responses=1
+         sysctl -w net.ipv4.route.flush=1
+
+# 3.3.7 Ensure Reverse Path Filtering is enabled
+     - name: 3.3.7 Ensure Reverse Path Filtering is enabled
+       ignore_errors: true
+       shell: |
+         sysctl -w net.ipv4.conf.all.rp_filter=1
+         sysctl -w net.ipv4.conf.default.rp_filter=1
+         sysctl -w net.ipv4.route.flush=1
+
+# 3.3.8 Ensure TCP SYN Cookies is enabled
+     - name: 3.3.8 Ensure TCP SYN Cookies is enabled
+       ignore_errors: true
+       shell: |    
+         sysctl -w net.ipv4.tcp_syncookies=1
+         sysctl -w net.ipv4.route.flush=1  
+
+# 3.3.9 Ensure IPv6 router advertisements are not accepted
+     - name: 3.3.9 Ensure IPv6 router advertisements are not accepted
+       ignore_errors: true
+       shell: |          
+        sysctl -w net.ipv6.conf.all.accept_ra=0
+        sysctl -w net.ipv6.conf.default.accept_ra=0
+        sysctl -w net.ipv6.route.flush=1
+
+#2.2.1 Ensure xinetd is not installed.
+     - name: 2.2.1 Ensure xinetd is not installed
+       ignore_errors: true
+       dnf: 
+         name: xinetd
+         state: absent
+
+#2.2.2 Ensure xorg-x11-server-common is not installed.
+     - name: 2.2.2 Ensure xorg-x11-server-common is not installed
+       dnf: 
+         name: xorg-x11-server-common
+         state: absent 
+       ignore_errors: true
+
+#2.2.3 Ensure Avahi Server is not installed.
+     - name: 2.2.3 Ensure Avahi Server is not installed.
+       dnf:
+         name:
+           - avahi-autoipd
+           - avahi
+         state: absent
+       ignore_errors: true
+     
+#2.2.4 Ensure CUPS is not installed.
+     - name: 2.2.4 Ensure CUPS is not installed
+       dnf: 
+         name: cups
+         state: absent
+       ignore_errors: true
+
+#2.2.5 Ensure DHCP Server is not installed.
+     - name: 2.2.5 Ensure DHCP Server is not installed
+       dnf: 
+         name: dhcp-server
+         state: absent
+       ignore_errors: true
+
+#2.2.6 Ensure DNS Server is not installed.
+     - name: 2.2.6 Ensure DNS Server is not installed
+       dnf: 
+         name: bind
+         state: absent
+       ignore_errors: true
+
+#2.2.7 Ensure VSFTP Server is not installed.
+     - name: 2.2.7 Ensure VSFTP Server is not installed
+       dnf: 
+         name: vsftpd
+         state: absent    
+       ignore_errors: true
+
+#2.2.8 Ensure TFTP Server is not installed.
+     - name: 2.2.8 Ensure TFTP Server is not installed
+       dnf: 
+         name: tftp-server
+         state: absent
+       ignore_errors: true
+
+#2.2.9 Ensure a web server is not installed.
+     - name: 2.2.9 Ensure a web server is not installed.
+       dnf:
+         name:
+           - httpd
+           - nginx
+         state: absent
+       ignore_errors: true
+
+#2.2.10 Ensure IMAP and POP3 server is not installed     
+     - name: 2.2.10 Ensure IMAP and POP3 server is not installed.
+       dnf:
+         name:
+           - dovecot
+           - cyrus-imapd
+         state: absent
+       ignore_errors: true
+
+#2.2.11 Ensure Samba is not installed
+     - name: 2.2.11 Ensure Samba is not installed
+       dnf: 
+         name: samba
+         state: absent
+       ignore_errors: true
+
+#2.2.12 Ensure HTTP Proxy Server is not installed     
+     - name: 2.2.12 Ensure HTTP Proxy Server is not installed
+       dnf: 
+         name: squid
+         state: absent
+       ignore_errors: true
+
+#2.2.13 Ensure net-snmp is not installed.
+     - name: 2.2.13 Ensure net-snmp is not installed
+       dnf: 
+         name: net-snmp
+         state: absent
+       ignore_errors: true
+
+#2.2.14 Ensure NIS server is not installed.
+     - name: 2.2.14 Ensure NIS server is not installed
+       dnf: 
+         name: ypserv
+         state: absent
+       ignore_errors: true
+
+#2.2.15 Ensure telnet-server is not installed.
+     - name: 2.2.15 Ensure telnet-server is not installed
+       dnf: 
+         name: telnet-server
+         state: absent
+       ignore_errors: true
+
+#2.3.1 Ensure NIS Client is not installed.
+     - name: 2.3.1 Ensure NIS Client is not installed
+       dnf: 
+         name: ypbind
+         state: absent
+       ignore_errors: true
+
+#2.3.2 Ensure rsh client is not installed.
+     - name: 2.3.2 Ensure rsh client is not installed
+       dnf: 
+         name: rsh
+         state: absent
+       ignore_errors: true
+
+#2.3.3 Ensure talk client is not installed.
+     - name: 2.3.3 Ensure talk client is not installed
+       dnf: 
+         name: talk
+         state: absent
+       ignore_errors: true
+
+#2.3.4 Ensure telnet client is not installed.
+     - name: 2.3.4 Ensure telnet client is not installed
+       dnf: 
+         name: telnet
+         state: absent
+       ignore_errors: true
+
+#2.3.5 Ensure LDAP client is not installed.
+     - name: 2.3.5 Ensure LDAP client is not installed
+       dnf: 
+         name: openldap-clients
+         state: absent
+       ignore_errors: true
+
+#2.3.6 Ensure TFTP client is not installed.
+     - name: 2.3.6 Ensure TFTP client is not installed
+       dnf: 
+         name: tftp
+         state: absent
+       ignore_errors: true
+
+#2.3.7 Ensure FTP client is not installed.
+     - name: 2.3.7 Ensure FTP client is not installed
+       dnf: 
+         name: ftp
+         state: absent
+       ignore_errors: true
+
+#4.2.1.1 Ensure rsyslog is installed.
+     - name: 4.2.1.1 Ensure rsyslog is installed
+       dnf: 
+         name: rsyslog
+         state: present
+       ignore_errors: true
+
+#4.2.1.2 Ensure rsyslog service is enabled.
+     - name: 4.2.1.2 Ensure rsyslog service is enabled
+       ansible.builtin.service: 
+         name: rsyslog
+         enabled: true
+       
+#4.2.2.1.1 Ensure systemd-journal-remote is installed.
+     - name: 4.2.2.1.1 Ensure systemd-journal-remote is installed
+       dnf: 
+         name: systemd-journal-remote
+         state: present
+       ignore_errors: true
+
+#4.2.3 Ensure permissions on all logfiles are configured.
+     - name: 4.2.3 Ensure permissions on all logfiles are configured
+       shell: find /var/log/ -type f -perm /g+wx,o+rwx -exec chmod --changes g-wx,o-rwx "{}" +
+       ignore_errors: true
+
+#5.2.11 Ensure SSH IgnoreRhosts is enabled
+     - name: 5.2.11 Ensure SSH IgnoreRhosts is enabled
+       ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#IgnoreRhosts yes'
+        line: IgnoreRhosts no
+       ignore_errors: true
+
+#5.2.14 Ensure system-wide crypto policy is not over-ridden /etc/sysconfig/sshd
+     - name: 5.2.14 Ensure system-wide crypto policy is not over-ridden /etc/sysconfig/sshd
+       ansible.builtin.lineinfile:
+        path: /etc/sysconfig/sshd
+        regexp: '^# CRYPTO_POLICY='
+        line:  CRYPTO_POLICY=
+       ignore_errors: true 
+
+#5.2.19 Ensure SSH LoginGraceTime is set to one minute or less
+     - name: 5.2.19 Ensure SSH LoginGraceTime is set to one minute or less
+       ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#LoginGraceTime 2m'
+        line: LoginGraceTime 60
+       ignore_errors: true
+
+#/etc/security/faillock.conf
+#5.5.2 Ensure lockout for failed password attempts is configured
+     - name: 5.5.2 Ensure lockout for failed password attempts is configured
+       ansible.builtin.lineinfile:
+        path: /etc/security/faillock.conf
+        regexp: '^# deny = 3'
+        line: deny = 3
+       ignore_errors: true    
+
+#5.5.2 Ensure lockout for failed password attempts is configured
+     - name: 5.5.2 Ensure lockout for failed password attempts is configured
+       ansible.builtin.lineinfile:
+        path: /etc/security/faillock.conf
+        regexp: '^# unlock_time = 600'
+        line:  unlock_time = 900
+       ignore_errors: true          
+
+#/etc/login.defs
+     - name: 5.6.1.1 Ensure password expiration is 365 days or less
+       ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MAX_DAYS	99999'
+        line: PASS_MAX_DAYS 365
+       ignore_errors: true
+
+     - name: 5.6.1.2 Ensure minimum days between password changes is 7 or more  
+       ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MIN_DAYS   0'
+        line: PASS_MIN_DAYS 7
+       ignore_errors: true
+
+     - name: 5.6.1.3 Ensure password expiration warning days is 7 or more  
+       ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MIN_DAYS 0'
+        line: PASS_WARN_AGE 7
+       ignore_errors: true
+
+     - name: 5.6.1.4 Ensure inactive password lock is 30 days or less
+       shell: useradd -D -f 30
+       ignore_errors: true
+
+     - name: 5.6.4 Ensure default group for the root account is GID 0
+       shell: usermod -g 0 root
+       ignore_errors: true
+      
+#/etc/passwd-
+     - name: 6.1.7 Ensure permissions on /etc/passwd- are configured.
+       ansible.builtin.file:
+         path: /etc/passwd-
+         owner: root
+         group: root
+         mode: u-x,go-wx
+
+#/etc/shadow-
+     - name: 6.1.8 Ensure permissions on /etc/shadow- are configured.
+       ansible.builtin.file:
+         path: /etc/shadow-
+         owner: root
+         group: root
+         mode: 0000
+
+#/etc/group-
+     - name: 6.1.9 Ensure permissions on /etc/group- are configured.
+       ansible.builtin.file:
+         path: /etc/group-
+         owner: root
+         group: root
+         mode: u-x,go-wx
+
+#/etc/gshadow-
+     - name: 6.1.10 Ensure permissions on /etc/gshadow- are configured.
+       ansible.builtin.file:
+         path: /etc/gshadow-
+         owner: root
+         group: root
+         mode: 0000
+#Restart sshd for config changes to take place.
+     - name: Restart sshd
+       ansible.builtin.service: 
+         name: sshd
+         state: restarted
+
+#Check sshd status to make sure it is operational.     
+     - name: Check sshd status
+       shell: systemctl status  sshd
+       register: Check_sshd_status
+
+     - name: print sshd status
+       debug:
+         msg: "{{ Check_sshd_status.stdout_lines }}"    
